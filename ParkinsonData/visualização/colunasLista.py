@@ -1,10 +1,12 @@
+#esse foi o primeiro de todos, parti desse princípio, pode ser descartado.
+
 import serial
 import time
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#setup
-porta_serial = 'COM5'  
+#setup 
+porta_serial = 'COM4'  
 baud_rate = 9600
 timeout = 1
 
