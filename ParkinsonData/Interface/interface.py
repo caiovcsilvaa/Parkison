@@ -14,7 +14,7 @@ gravando = False
 status_conexao = tk.StringVar(value="Desconectado")
 
 #Setup da porta serial
-porta_serial = 'COM4'
+porta_serial = 'COM5'
 baud_rate = 9600
 timeout = 0.1
 
