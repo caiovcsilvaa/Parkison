@@ -7,7 +7,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
-import numpy as np
 
 class ArduinoApp:
     def __init__(self, root):
@@ -32,11 +31,6 @@ class ArduinoApp:
         self.leitura1 = []
         self.leitura2 = []
         self.leitura3 = []
-
-        # Arrays para armazenar os dados interpolados
-        self.interp_leitura1 = []
-        self.interp_leitura2 = []
-        self.interp_leitura3 = []
 
         # Configuração da interface gráfica
         self.configurar_interface()
@@ -88,21 +82,21 @@ class ArduinoApp:
         self.ax2.clear()
         self.ax3.clear()
 
-        # Atualizar os gráficos com os dados interpolados
-        self.ax1.plot(self.interp_leitura1, label='Leitura 1', color='r')
-        self.ax2.plot(self.interp_leitura2, label='Leitura 2', color='g')
-        self.ax3.plot(self.interp_leitura3, label='Leitura 3', color='b')
+        # Atualizar os gráficos com os dados coletados
+        self.ax1.plot(self.leitura1, label='Leitura 1', color='r')
+        self.ax2.plot(self.leitura2, label='Leitura 2', color='g')
+        self.ax3.plot(self.leitura3, label='Leitura 3', color='b')
 
         self.ax1.set_ylim(bottom=0, top=10000)
         self.ax2.set_ylim(bottom=0, top=10000)
         self.ax3.set_ylim(bottom=0, top=10000)
 
         # Adicionando rótulos aos eixos
-        self.ax1.set_xlabel("Dados coletados a cada 100 amostras interpoladas")
+        self.ax1.set_xlabel("Amostras")
         self.ax1.set_ylabel("Pressão em Pascal (Pa)")
-        self.ax2.set_xlabel("Dados coletados a cada 100 amostras interpoladas")
+        self.ax2.set_xlabel("Amostras")
         self.ax2.set_ylabel("Pressão em Pascal (Pa)")
-        self.ax3.set_xlabel("Dados coletados a cada 100 amostras interpoladas")
+        self.ax3.set_xlabel("Amostras")
         self.ax3.set_ylabel("Pressão em Pascal (Pa)")
 
         self.ax1.legend(loc='upper right')
@@ -140,11 +134,6 @@ class ArduinoApp:
                             self.leitura1.pop(0)
                             self.leitura2.pop(0)
                             self.leitura3.pop(0)
-
-                        # Interpolação linear para suavizar as transições entre os dados
-                        self.interp_leitura1 = np.interp(np.linspace(0, len(self.leitura1) - 1, 500), np.arange(len(self.leitura1)), self.leitura1)
-                        self.interp_leitura2 = np.interp(np.linspace(0, len(self.leitura2) - 1, 500), np.arange(len(self.leitura2)), self.leitura2)
-                        self.interp_leitura3 = np.interp(np.linspace(0, len(self.leitura3) - 1, 500), np.arange(len(self.leitura3)), self.leitura3)
 
                 except ValueError:
                     pass
