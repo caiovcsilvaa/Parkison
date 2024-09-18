@@ -14,16 +14,16 @@ class ArduinoApp:
         self.root = root
         self.root.title("Menu Principal")
 
-        # Frames
+        #Frames
         self.frame_menu = ttk.Frame(self.root, padding="20")
         self.frame_menu.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         self.frame_coleta = ttk.Frame(self.root, padding="20")
 
-        # Configuração da interface
+        #Configuração da interface
         self.configurar_menu_inicial()
 
-        # Configuração inicial para Matplotlib e leitura de dados
+        #Configuração inicial para Matplotlib e leitura de dados
         self.configurar_interface_coleta()
 
     def configurar_menu_inicial(self):
@@ -40,9 +40,9 @@ class ArduinoApp:
         botao_sair.grid(row=2, column=0, columnspan=2, pady=10)
 
     def mostrar_tela_coleta(self):
-        self.frame_menu.grid_forget()  # Esconde o frame do menu
+        self.frame_menu.grid_forget()  #Esconde o frame do menu
         self.frame_coleta.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))  # Mostra o frame de coleta
-        self.status_conexao.set("Pronto")  # Atualiza o status de conexão
+        self.status_conexao.set(" Arduino Pronto para coleta ✓ \n Sem problemas no Sistema ✓")  #Atualiza o status de conexão
 
     def mostrar_configuracoes(self):
         # Aqui você pode adicionar outra tela ou funcionalidades de configurações
@@ -50,11 +50,11 @@ class ArduinoApp:
 
     def configurar_interface_coleta(self):
         self.gravando = False
-        self.status_conexao = tk.StringVar(value="Desconectado")
+        self.status_conexao = tk.StringVar(value=" Desconectado - Erro na conexão do Arduino X")
 
         self.porta_serial = 'COM5'
-        self.baud_rate = 115200
-        self.timeout = 0.1
+        self.baud_rate = 9600
+        self.timeout = 0.05
 
         sns.set(style="whitegrid")
         self.fig, (self.ax1, self.ax2, self.ax3) = plt.subplots(3, 1, figsize=(8, 8))
@@ -67,9 +67,6 @@ class ArduinoApp:
         self.interp_leitura1 = []
         self.interp_leitura2 = []
         self.interp_leitura3 = []
-
-        # Configuração da conexão serial
-        self.configurar_conexao_serial()
 
         frame_controles = ttk.Frame(self.frame_coleta, padding="10")
         frame_controles.grid(row=0, column=0, sticky=(tk.W, tk.E))
@@ -100,7 +97,7 @@ class ArduinoApp:
         except serial.SerialException:
             self.status_conexao.set("Erro de Conexão")
             tk.messagebox.showerror("Erro", "Não foi possível conectar ao Arduino.")
-            self.root.destroy()
+            
 
     def ler_dados_arduino(self):
         if self.ser.is_open:
@@ -141,13 +138,15 @@ class ArduinoApp:
             self.ax3.text(0.02, 0.95, f'Leitura 3: {self.leitura3[-1]:.2f}', transform=self.ax3.transAxes, verticalalignment='top')
 
     def iniciar_gravacao(self):
+        #Configuração da conexão serial
+        self.configurar_conexao_serial()
         self.gravando = True
-        self.status_conexao.set("Conectado")
+        self.status_conexao.set("Esperando início da gravação")
         threading.Thread(target=self.receber_dados).start()
 
     def parar_gravacao(self):
         self.gravando = False
-        self.status_conexao.set("Desconectado")
+        self.status_conexao.set("Gravação Parada")
 
     def receber_dados(self):
         if self.gravando:
