@@ -1,0 +1,31 @@
+import tkinter as tk
+from tkinter import ttk
+from cadastro import JanelaCadastro
+from coleta import JanelaColeta
+
+class MenuPrincipal:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Menu Principal")
+        self.frame_menu = ttk.Frame(self.root, padding="20")
+        self.frame_menu.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        self.configurar_menu_inicial()
+
+    def configurar_menu_inicial(self):
+        label_bem_vindo = ttk.Label(self.frame_menu, text="Bem-vindo ao Sistema de Coleta de Dados da Quantificação de Tremores da Doença de Parkinson ", font=("Helvetica", 16))
+        label_bem_vindo.grid(row=0, column=0, columnspan=2, pady=10)
+
+        botao_iniciar_coleta = ttk.Button(self.frame_menu, text="Iniciar Coleta de Dados", command=self.mostrar_tela_coleta)
+        botao_iniciar_coleta.grid(row=1, column=0, padx=5, pady=10)
+
+        botao_configuracoes = ttk.Button(self.frame_menu, text="Pacientes", command=self.mostrar_cadastro_paciente)
+        botao_configuracoes.grid(row=1, column=1, padx=5, pady=10)
+
+        botao_sair = ttk.Button(self.frame_menu, text="Sair", command=self.root.quit)
+        botao_sair.grid(row=2, column=0, columnspan=2, pady=10)
+
+    def mostrar_tela_coleta(self):
+        JanelaColeta(self.root)
+
+    def mostrar_cadastro_paciente(self):
+        JanelaCadastro(self.root)
