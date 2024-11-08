@@ -1,6 +1,8 @@
 import tkinter as tk
-import numpy as np
 from tkinter import ttk
+import numpy as np
+import serial
+import time
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
@@ -8,7 +10,16 @@ import seaborn as sns
 import threading
 
 class JanelaColeta:
-    def __init__(self, root):
+    def __init__(self, root, menu_principal):
+
+        self.menu_principal = menu_principal
+        self.gravando = False
+        self.status_conexao = tk.StringVar(value=" Desconectado - Erro na conexão do Arduino X")
+
+        self.porta_serial = 'COM5'
+        self.baud_rate = 9600
+        self.timeout = 0.05
+        
         self.root = root
         self.janela = tk.Toplevel(root)  #Criação do Toplevel para a nova janela
         self.janela.title("Coleta de Dados")
@@ -30,7 +41,7 @@ class JanelaColeta:
         self.leitura1, self.leitura2, self.leitura3 = [], [], []
         self.interp_leitura1, self.interp_leitura2, self.interp_leitura3 = [], [], []
 
-        # Controles
+        #Controles
         frame_controles = ttk.Frame(self.frame_coleta, padding="10")
         frame_controles.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
@@ -46,15 +57,25 @@ class JanelaColeta:
         status_value = ttk.Label(frame_controles, textvariable=self.status_conexao)
         status_value.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
 
-        # Embedding Matplotlib Figure
+        #Embedding Matplotlib Figure
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.frame_coleta)
         self.canvas.get_tk_widget().grid(row=2, column=0, columnspan=2)
 
         self.anim = FuncAnimation(self.fig, self.atualizar_grafico, interval=200, cache_frame_data=False)
 
-        # Botão Voltar ao Menu
+        #Botão Voltar ao Menu
         botao_voltar_menu = ttk.Button(self.frame_coleta, text="Voltar ao Menu", command=self.voltar_para_menu)
         botao_voltar_menu.grid(row=3, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
+    
+    def configurar_conexao_serial(self):
+        try:
+            self.ser = serial.Serial(self.porta_serial, self.baud_rate, timeout=self.timeout)
+            time.sleep(2)
+            self.status_conexao.set("Pronto")
+        except serial.SerialException:
+            self.status_conexao.set("Erro de Conexão")
+            tk.messagebox.showerror("Erro", "Não foi possível conectar ao Arduino.")
+            
 
     def iniciar_gravacao(self):
         self.configurar_conexao_serial()
@@ -66,12 +87,45 @@ class JanelaColeta:
         self.gravando = False
         self.status_conexao.set("Gravação Parada")
 
+    def ler_dados_arduino(self):
+        if self.ser.is_open:
+            linha = self.ser.readline().decode('utf-8').strip()
+            return linha
+        else:
+            return None
+        
+    def iniciar_gravacao(self):
+        #Configuração da conexão serial
+        self.configurar_conexao_serial()
+        self.gravando = True
+        self.status_conexao.set("Esperando início da gravação")
+        threading.Thread(target=self.receber_dados).start()
+
+    def parar_gravacao(self):
+        self.gravando = False
+        self.status_conexao.set("Gravação Parada")
+    
+    
+
+
     def mostrar_tela_coleta(self):
-        self.janela.deiconify()  # Garante que o Toplevel seja mostrado
-        self.status_conexao.set("Arduino Pronto para coleta ✓\nSem problemas no Sistema ✓")
+    #Verifica se a conexão foi estabelecida corretamente
+        #if  self.status_conexao.get() == "Pronto":
+            self.menu_principal.frame_menu.grid_forget()  # Esconde o frame do menu
+            self.frame_coleta.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))  # Mostra o frame de coleta
+            self.status_conexao.set(" Arduino Pronto para coleta ✓ \n Sem problemas no Sistema ✓")  # Atualiza o status de conexão
+            botao_voltar_menu = ttk.Button(self.frame_coleta, text="Voltar ao Menu", command=self.voltar_para_menu)
+            botao_voltar_menu.grid(row=1, column=0, padx=10, pady=10, sticky=(tk.W, tk.E))
+        #else:
+           #tk.messagebox.showwarning("Aguardando Conexão", "Aguardando a conexão do Arduino. Por favor, verifique a conexão.")
+    
+    #Botão para voltar ao menu
 
     def voltar_para_menu(self):
-        self.janela.withdraw()  # Oculta a janela de coleta
+        #Esconder o frame de coleta e voltar para o menu principal
+        self.frame_coleta.grid_forget()  # Esconde o frame de coleta
+        self.menu_principal.frame_menu.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))  # Mostra o frame do menu
+
 
     def atualizar_grafico(self, frame):
         self.ax1.clear()

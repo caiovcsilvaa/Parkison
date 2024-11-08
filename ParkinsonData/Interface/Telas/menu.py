@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
 from cadastro import JanelaCadastro
 from coleta import JanelaColeta
 
@@ -10,6 +11,23 @@ class MenuPrincipal:
         self.frame_menu = ttk.Frame(self.root, padding="20")
         self.frame_menu.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         self.configurar_menu_inicial()
+        self.carregar_logo()
+
+    def carregar_logo(self):
+        try:
+            #Caminho correto da imagem
+            imagem = Image.open(r"C:\Users\caiov\Desktop\parkinson\Parkison\ParkinsonData\Interface\Telas\upelogo.png")
+            imagem = imagem.resize((100, 100), Image.LANCZOS)  # Use LANCZOS em vez de ANTIALIAS
+
+            #Converte a imagem para o formato compatível com Tkinter
+            self.logo = ImageTk.PhotoImage(imagem)
+
+            #Adiciona a imagem ao menu
+            label_logo = ttk.Label(self.frame_menu, image=self.logo)
+            label_logo.grid(row=2, column=0, columnspan=5, pady=10)
+
+        except Exception as e:
+            print(f"Erro ao carregar a logo: {e}")
 
     def configurar_menu_inicial(self):
         label_bem_vindo = ttk.Label(self.frame_menu, text="Bem-vindo ao Sistema de Coleta de Dados da Quantificação de Tremores da Doença de Parkinson ", font=("Helvetica", 16))
@@ -25,7 +43,7 @@ class MenuPrincipal:
         botao_sair.grid(row=2, column=0, columnspan=2, pady=10)
 
     def mostrar_tela_coleta(self):
-        JanelaColeta(self.root)
+        JanelaColeta(self.root, self)
 
     def mostrar_cadastro_paciente(self):
         JanelaCadastro(self.root)

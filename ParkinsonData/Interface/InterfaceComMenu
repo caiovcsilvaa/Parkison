@@ -8,12 +8,21 @@ import seaborn as sns
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 import numpy as np
+from numpy import random
+from PIL import Image, ImageTk
+from reportlab.lib.pagesizes import A4
+from fpdf import FPDF
+from reportlab.pdfgen import canvas
+from datetime import datetime
 
 class ArduinoApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Menu Principal")
 
+        self.dados_pacientes = []
+
+    
         #Frames
         self.frame_menu = ttk.Frame(self.root, padding="20")
         self.frame_menu.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -37,7 +46,25 @@ class ArduinoApp:
         botao_configuracoes.grid(row=1, column=1, padx=5, pady=10)
 
         botao_sair = ttk.Button(self.frame_menu, text="Sair", command=self.root.quit)
-        botao_sair.grid(row=2, column=0, columnspan=2, pady=10)
+        botao_sair.grid(row=5, column=0, columnspan=2, pady=20)
+        
+        self.carregar_logo()
+
+    def carregar_logo(self):
+        try:
+            # Caminho correto da imagem
+            imagem = Image.open(r"C:\Users\caiov\Desktop\parkinson\Parkison\ParkinsonData\Interface\upelogo.png")
+            imagem = imagem.resize((150, 150), Image.LANCZOS)  # Use LANCZOS em vez de ANTIALIAS
+
+            # Converte a imagem para o formato compatível com Tkinter
+            self.logo = ImageTk.PhotoImage(imagem)
+
+            # Adiciona a imagem ao menu
+            label_logo = ttk.Label(self.frame_menu, image=self.logo)
+            label_logo.grid(row=2, column=0, columnspan=5, pady=10)
+
+        except Exception as e:
+            print(f"Erro ao carregar a logo: {e}")
 
     def mostrar_tela_coleta(self):
     #Verifica se a conexão foi estabelecida corretamente
@@ -175,7 +202,7 @@ class ArduinoApp:
             return
         
         #Criar uma string com todos os dados coletados
-        dados_paciente = (
+        paciente = (
             f"Nome: {nome}\n"
             f"Sexo: {sexo}\n"
             f"Idade: {idade}\n"
@@ -188,9 +215,11 @@ class ArduinoApp:
             f"Terapia de Reabilitação: {terapia}\n"
             f"Tipos de Terapia: {', '.join(terapias_selecionadas) if terapias_selecionadas else 'Nenhum'}"
         )
-        
+
+        self.dados_pacientes.append(paciente)
+
         #Exibir uma mensagem de confirmação com os dados do paciente
-        tk.messagebox.showinfo("Paciente Cadastrado", f"Paciente cadastrado com sucesso!\n\n{dados_paciente}")
+        tk.messagebox.showinfo("Paciente Cadastrado", f"Paciente cadastrado com sucesso!\n\n{paciente}")
         
         #Fechar a janela de cadastro após salvar os dados
         janela_cadastro.destroy()
@@ -226,6 +255,10 @@ class ArduinoApp:
 
         status_label = ttk.Label(frame_controles, text="Status da Conexão:")
         status_label.grid(row=1, column=0, padx=5, pady=5, sticky=tk.E)
+
+        #Botão para gerar o relatório PDF
+        botao_relatorio = ttk.Button(frame_controles, text="Gerar Relatório", command=self.gerar_relatorio_pacientes)
+        botao_relatorio.grid(row=0, column=2, padx=5, pady=5)  # Posicione o botão conforme necessário
 
         status_value = ttk.Label(frame_controles, textvariable=self.status_conexao)
         status_value.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
@@ -325,6 +358,52 @@ class ArduinoApp:
         if hasattr(self, 'ser'):
             self.ser.close()
         self.root.destroy()
+
+    def gerar_relatorio_pacientes(self):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        pdf.cell(200, 10, txt="Relatório de Pacientes com Parkinson", ln=True, align="C")
+        pdf.cell(200, 10, txt="Data: 2024-10-31", ln=True, align="C")
+
+        for paciente in self.dados_pacientes:
+            pdf.ln(10)
+            pdf.cell(200, 10, txt=f"Nome: {paciente['nome']}", ln=True)
+            pdf.cell(200, 10, txt=f"Sexo: {paciente['sexo']}", ln=True)
+            pdf.cell(200, 10, txt=f"Idade: {paciente['idade']}", ln=True)
+            pdf.cell(200, 10, txt=f"Nível de Instrução: {paciente['instrucao']}", ln=True)
+            
+            pdf.cell(200, 10, txt="Sintomas Motores:", ln=True)
+            pdf.cell(200, 10, txt=", ".join(paciente['sintomas_motor']) if paciente['sintomas_motor'] else "Nenhum", ln=True)
+            
+            pdf.cell(200, 10, txt="Sintomas Não Motores:", ln=True)
+            pdf.cell(200, 10, txt=", ".join(paciente['sintomas_nao_motor']) if paciente['sintomas_nao_motor'] else "Nenhum", ln=True)
+            
+            pdf.cell(200, 10, txt=f"Tempo de Diagnóstico: {paciente['diagnostico']}", ln=True)
+            pdf.cell(200, 10, txt=f"Tratamento Medicamentoso: {paciente['tratamento']}", ln=True)
+            pdf.cell(200, 10, txt=f"Medicação: {paciente['medicacao']}", ln=True)
+            
+            pdf.cell(200, 10, txt=f"Terapia de Reabilitação: {paciente['terapia']}", ln=True)
+            pdf.cell(200, 10, txt="Tipos de Terapia:", ln=True)
+            pdf.cell(200, 10, txt=", ".join(paciente['terapias_selecionadas']) if paciente['terapias_selecionadas'] else "Nenhum", ln=True)
+            
+            # Exemplo de Data de Coleta (se existir)
+            if "data_coleta" in paciente:
+                pdf.cell(200, 10, txt=f"Data da Coleta: {paciente['data_coleta']}", ln=True)
+            
+            # Exemplo de Medidas Coletadas (se existir)
+            if "medidas" in paciente:
+                pdf.cell(200, 10, txt="Medidas Coletadas:", ln=True)
+                for medida in paciente["medidas"]:
+                    pdf.cell(200, 10, txt=f"{medida:.2f}", ln=True)
+            
+            pdf.ln(10)  # espaço entre registros de pacientes
+
+        # Salva o PDF com um nome especificado
+        pdf.output("relatorio_pacientes.pdf")
+        print("Relatório gerado com sucesso!")
+
 
 #Inicializa a interface
 if __name__ == "__main__":
